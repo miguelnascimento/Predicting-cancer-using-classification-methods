@@ -1,0 +1,309 @@
+```{r}
+#This file creates the "Datasets" folder
+
+install.packages("kknn")
+install.packages("corrplot")
+install.packages("caret")
+install.packages("factoextra")
+
+```
+
+```{r}
+library(kknn)
+library(corrplot)
+library(caret)
+library(factoextra)
+```
+
+```{r}
+arcene_train <- as.data.frame(read.table("http://web.tecnico.ulisboa.pt/~ist13493/MEDM2020/Project1/Group4Data/arcene_train.data"))
+arcene_train_labels <- as.data.frame(read.table("http://web.tecnico.ulisboa.pt/~ist13493/MEDM2020/Project1/Group4Data/arcene_train.labels"))
+arcene_valid <- as.data.frame(read.table("http://web.tecnico.ulisboa.pt/~ist13493/MEDM2020/Project1/Group4Data/arcene_valid.data"))
+arcene_valid_labels <- as.data.frame(read.table("http://web.tecnico.ulisboa.pt/~ist13493/MEDM2020/Project1/Group4Data/arcene_valid.labels"))
+
+arcene_train[2250:4749] <- NULL
+arcene_train[6500:6999] <- NULL
+arcene_valid[2250:4749] <- NULL
+arcene_valid[6500:6999] <- NULL
+```
+
+
+```{r}
+
+arcene_unlabeled <- rbind(arcene_train, arcene_valid) 
+arcene_labels <- rbind(arcene_train_labels,arcene_valid_labels)
+
+arcene <- arcene_unlabeled 
+arcene$labels <- as.factor(unlist(arcene_labels))
+
+```
+
+
+
+
+```{r}
+#Não há valores em falta:
+sum(is.na(arcene))
+#No entanto há algumas colunas com valores constantes, o que cria depois problemas
+col_constantes <- names(arcene_unlabeled[, sapply(arcene_unlabeled, function(v) var(v, na.rm=TRUE)==0)])
+
+arcene_unlabeled <- arcene_unlabeled[ , -which(names(arcene_unlabeled) %in% col_constantes)]
+arcene <- arcene[ , -which(names(arcene) %in% col_constantes)]
+
+
+```
+
+
+```{r}
+#Correlação
+
+matriz_corr <- cor(arcene_unlabeled)
+#corrplot(matriz_corr, method="color", order = "hclust", type="upper", diag=FALSE, tl.cex = 0.7)
+
+```
+
+```{r}
+highlyCor_99 <- colnames(arcene_unlabeled)[findCorrelation(matriz_corr, cutoff = 0.99)]
+arcene_unlabeled_corr_99<-arcene_unlabeled[, which(!colnames(arcene_unlabeled) %in% highlyCor_99)]
+ncol(arcene_unlabeled_corr_99)
+
+highlyCor_95 <- colnames(arcene_unlabeled)[findCorrelation(matriz_corr, cutoff = 0.95)]
+arcene_unlabeled_corr_95<-arcene_unlabeled[, which(!colnames(arcene_unlabeled) %in% highlyCor_95)]
+ncol(arcene_unlabeled_corr_95)
+
+highlyCor_90 <- colnames(arcene_unlabeled)[findCorrelation(matriz_corr, cutoff = 0.90)]
+arcene_unlabeled_corr_90<-arcene_unlabeled[, which(!colnames(arcene_unlabeled) %in% highlyCor_90)]
+ncol(arcene_unlabeled_corr_90)
+
+highlyCor_85 <- colnames(arcene_unlabeled)[findCorrelation(matriz_corr, cutoff = 0.85)]
+arcene_unlabeled_corr_85<-arcene_unlabeled[, which(!colnames(arcene_unlabeled) %in% highlyCor_85)]
+ncol(arcene_unlabeled_corr_85)
+
+highlyCor_80 <- colnames(arcene_unlabeled)[findCorrelation(matriz_corr, cutoff = 0.80)]
+arcene_unlabeled_corr_80<-arcene_unlabeled[, which(!colnames(arcene_unlabeled) %in% highlyCor_80)]
+ncol(arcene_unlabeled_corr_80)
+
+highlyCor_75 <- colnames(arcene_unlabeled)[findCorrelation(matriz_corr, cutoff = 0.75)]
+arcene_unlabeled_corr_75<-arcene_unlabeled[, which(!colnames(arcene_unlabeled) %in% highlyCor_75)]
+ncol(arcene_unlabeled_corr_75)
+
+highlyCor_70 <- colnames(arcene_unlabeled)[findCorrelation(matriz_corr, cutoff = 0.70)]
+arcene_unlabeled_corr_70<-arcene_unlabeled[, which(!colnames(arcene_unlabeled) %in% highlyCor_70)]
+ncol(arcene_unlabeled_corr_70)
+
+
+arcene_corr_99 <- arcene_unlabeled_corr_99
+arcene_corr_99$labels <- as.factor(unlist(arcene_labels))
+
+arcene_corr_95 <- arcene_unlabeled_corr_95
+arcene_corr_95$labels <- as.factor(unlist(arcene_labels))
+
+arcene_corr_90 <- arcene_unlabeled_corr_90
+arcene_corr_90$labels <- as.factor(unlist(arcene_labels))
+
+arcene_corr_85 <- arcene_unlabeled_corr_85
+arcene_corr_85$labels <- as.factor(unlist(arcene_labels))
+
+arcene_corr_80 <- arcene_unlabeled_corr_80
+arcene_corr_80$labels <- as.factor(unlist(arcene_labels))
+
+arcene_corr_75 <- arcene_unlabeled_corr_75
+arcene_corr_75$labels <- as.factor(unlist(arcene_labels))
+
+arcene_corr_70 <- arcene_unlabeled_corr_70
+arcene_corr_70$labels <- as.factor(unlist(arcene_labels))
+
+```
+
+
+
+
+```{r}
+#PCA
+pca <- prcomp(arcene_unlabeled, center=TRUE, scale=TRUE)
+pca_total<-data.frame(predict(pca,arcene_unlabeled))
+
+fviz_eig(pca)
+get_eigenvalue(pca)
+
+
+arcene_unlabeled_pca_70 <- pca_total[, which(colnames(pca_total) %in% colnames(pca_total)[1:40])]
+arcene_unlabeled_pca_75 <- pca_total[, which(colnames(pca_total) %in% colnames(pca_total)[1:57])]
+arcene_unlabeled_pca_80 <- pca_total[, which(colnames(pca_total) %in% colnames(pca_total)[1:77])]
+arcene_unlabeled_pca_85 <- pca_total[, which(colnames(pca_total) %in% colnames(pca_total)[1:100])]
+arcene_unlabeled_pca_90 <- pca_total[, which(colnames(pca_total) %in% colnames(pca_total)[1:127])]
+arcene_unlabeled_pca_95 <- pca_total[, which(colnames(pca_total) %in% colnames(pca_total)[1:159])]
+arcene_unlabeled_pca_99 <- pca_total[, which(colnames(pca_total) %in% colnames(pca_total)[1:190])]
+
+
+arcene_pca_99 <- arcene_unlabeled_pca_99
+arcene_pca_99$labels <- unlist(arcene_labels)
+
+arcene_pca_95 <- arcene_unlabeled_pca_95
+arcene_pca_95$labels <- unlist(arcene_labels)
+
+arcene_pca_90 <- arcene_unlabeled_pca_90
+arcene_pca_90$labels <- unlist(arcene_labels)
+
+arcene_pca_85 <- arcene_unlabeled_pca_85
+arcene_pca_85$labels <- unlist(arcene_labels)
+
+arcene_pca_80 <- arcene_unlabeled_pca_80
+arcene_pca_80$labels <- unlist(arcene_labels)
+
+arcene_pca_75 <- arcene_unlabeled_pca_75
+arcene_pca_75$labels <- unlist(arcene_labels)
+
+arcene_pca_70 <- arcene_unlabeled_pca_70
+arcene_pca_70$labels <- unlist(arcene_labels)
+
+
+```
+
+
+```{r}
+#Baralhar datasets
+
+set.seed(14)
+permutacao <- sample(200)
+
+arcene_unlabeled <- arcene_unlabeled[permutacao,]
+arcene_labels <- as.data.frame(arcene_labels[permutacao,])
+arcene <- arcene[permutacao,]
+
+arcene_corr_70 <- arcene_corr_70[permutacao,]
+arcene_corr_75 <- arcene_corr_75[permutacao,]
+arcene_corr_80 <- arcene_corr_80[permutacao,]
+arcene_corr_85 <- arcene_corr_85[permutacao,]
+arcene_corr_90 <- arcene_corr_90[permutacao,]
+arcene_corr_95 <- arcene_corr_95[permutacao,]
+arcene_corr_99 <- arcene_corr_99[permutacao,]
+
+arcene_pca_70 <- arcene_pca_70[permutacao,]
+arcene_pca_75 <- arcene_pca_75[permutacao,]
+arcene_pca_80 <- arcene_pca_80[permutacao,]
+arcene_pca_85 <- arcene_pca_85[permutacao,]
+arcene_pca_90 <- arcene_pca_90[permutacao,]
+arcene_pca_95 <- arcene_pca_95[permutacao,]
+arcene_pca_99 <- arcene_pca_99[permutacao,]
+
+
+```
+
+
+```{r}
+#write.csv(arcene_pca_99,"arcene_pca_99.csv")
+write.csv(arcene_pca_95,"arcene_pca_95.csv")
+#write.csv(arcene_pca_90,"arcene_pca_90.csv")
+write.csv(arcene_pca_85,"arcene_pca_85.csv")
+#write.csv(arcene_pca_80,"arcene_pca_80.csv")
+write.csv(arcene_pca_75,"arcene_pca_75.csv")
+#write.csv(arcene_pca_70,"arcene_pca_70.csv")
+
+write.csv(arcene_corr_99,"arcene_corr_99.csv")
+write.csv(arcene_corr_95,"arcene_corr_95.csv")
+#write.csv(arcene_corr_90,"arcene_corr_90.csv")
+write.csv(arcene_corr_85,"arcene_corr_85.csv")
+#write.csv(arcene_corr_80,"arcene_corr_80.csv")
+write.csv(arcene_corr_75,"arcene_corr_75.csv")
+#write.csv(arcene_corr_70,"arcene_corr_70.csv")
+
+write.csv(arcene_unlabeled, "arcene_unlabeled.csv")
+write.csv(arcene_labels, "arcene_labels.csv")
+write.csv(arcene, "arcene.csv")
+```
+
+
+```{r}
+arcene_treino <- arcene[c(1:150),]
+arcene_teste <- arcene[c(151:200),]
+
+
+arcene_unlabeled_treino <- arcene_unlabeled[c(1:150),]
+arcene_unlabeled_teste <- arcene_unlabeled[c(151:200),]
+
+
+arcene_labels_treino <- arcene_labels[c(1:150),]
+arcene_labels_teste <- arcene_labels[c(151:200),]
+
+
+
+
+arcene_corr_75_treino <- arcene_corr_75[c(1:150),]
+arcene_corr_75_teste <- arcene_corr_75[c(151:200),]
+
+
+
+
+arcene_corr_85_treino <- arcene_corr_85[c(1:150),]
+arcene_corr_85_teste <- arcene_corr_85[c(151:200),]
+
+
+
+arcene_corr_95_treino <- arcene_corr_95[c(1:150),]
+arcene_corr_95_teste <- arcene_corr_95[c(151:200),]
+
+arcene_corr_99_treino <- arcene_corr_99[c(1:150),]
+arcene_corr_99_teste <- arcene_corr_99[c(151:200),]
+
+arcene_pca_75_treino <- arcene_pca_75[c(1:150),]
+arcene_pca_75_teste <- arcene_pca_75[c(151:200),]
+
+arcene_pca_85_treino <- arcene_pca_85[c(1:150),]
+arcene_pca_85_teste <- arcene_pca_85[c(151:200),]
+
+arcene_pca_95_treino <- arcene_pca_95[c(1:150),]
+arcene_pca_95_teste <- arcene_pca_95[c(151:200),]
+
+
+
+
+write.csv(arcene,"arcene.csv")
+write.csv(arcene_unlabeled,"arcene_unlabeled.csv")
+write.csv(arcene_labels,"arcene_labels.csv")
+
+write.csv(arcene_treino, "arcene_treino.csv")
+write.csv(arcene_teste, "arcene_teste.csv")
+
+write.csv(arcene_unlabeled_treino, "arcene_unlabeled_treino.csv")
+write.csv(arcene_unlabeled_teste, "arcene_unlabeled_teste.csv")
+
+write.csv(arcene_labels_treino, "arcene_labels_treino.csv")
+write.csv(arcene_labels_teste, "arcene_labels_teste.csv")
+
+write.csv(arcene_corr_75_treino, "arcene_corr_75_treino.csv")
+write.csv(arcene_corr_75_teste, "arcene_corr_75_teste.csv")
+write.csv(arcene_corr_85_treino, "arcene_corr_85_treino.csv")
+write.csv(arcene_corr_85_teste, "arcene_corr_85_teste.csv")
+write.csv(arcene_corr_95_treino, "arcene_corr_95_treino.csv")
+write.csv(arcene_corr_95_teste, "arcene_corr_95_teste.csv")
+write.csv(arcene_corr_99_treino, "arcene_corr_99_treino.csv")
+write.csv(arcene_corr_99_teste, "arcene_corr_99_teste.csv")
+
+write.csv(arcene_pca_75_treino, "arcene_pca_75_treino.csv")
+write.csv(arcene_pca_75_teste, "arcene_pca_75_teste.csv")
+write.csv(arcene_pca_85_treino, "arcene_pca_85_treino.csv")
+write.csv(arcene_pca_85_teste, "arcene_pca_85_teste.csv")
+write.csv(arcene_pca_95_treino, "arcene_pca_95_treino.csv")
+write.csv(arcene_pca_95_teste, "arcene_pca_95_teste.csv")
+
+
+
+
+```
+
+
+
+```{r}
+#matriz esparsa
+#
+n_zeros <- sum(colSums(arcene_corr_99==0)) #num de zeros
+tam <- nrow(arcene_corr_99)*ncol(arcene_corr_99) #num de entradas
+n_zeros/tam #quase metade
+
+
+```
+```
+
+
+

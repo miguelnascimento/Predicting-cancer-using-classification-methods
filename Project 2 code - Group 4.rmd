@@ -1,0 +1,324 @@
+#Clustering=================================
+
+
+#Auxiliary functions
+
+```{r}
+
+library(cluster)
+library(clusterCrit)
+
+ind4<-function(w){
+  m<-matrix(NA,7,10);
+  m[2,1]<-"Tau";
+  m[3,1]<-"Calinski_Harabasz";
+  m[4,1]<-"Dunn";
+  m[5,1]<-"Gamma";
+  m[6,1]<-"Rat_Lan";
+  m[7,1]<-"Silhouette";
+  k=2;
+  while(k<=10){
+    cl<-pam(as.matrix(w),k,FALSE);
+    aux<-intCriteria(as.matrix(w),cl$clustering,c("Tau","Calinski_Harabasz","Dunn","Gamma","Ratkowsky_Lance","Silhouette"));
+    m[1,k]<-k;
+    m[2,k]<-aux$tau;
+    m[3,k]<-aux$calinski_harabasz;
+    m[4,k]<-aux$dunn;
+    m[5,k]<-aux$gamma;
+    m[6,k]<-aux$ratkowsky_lance;
+    m[7,k]<-aux$silhouette;
+    k=k+1;
+  }
+  return(m)
+}
+
+ind3<-function(w){
+  m<-matrix(NA,7,10);
+  m[2,1]<-"Tau";
+  m[3,1]<-"Calinski_Harabasz";
+  m[4,1]<-"Dunn";
+  m[5,1]<-"Gamma";
+  m[6,1]<-"Rat_Lan";
+  m[7,1]<-"Silhouette";
+  k=2;
+  while(k<=10){
+    cl<-kmeans(w,k,nstart=20);
+    aux<-intCriteria(as.matrix(w),cl$cluster,c("Tau","Calinski_Harabasz","Dunn","Gamma","Ratkowsky_Lance","Silhouette"));
+    m[1,k]<-k;
+    m[2,k]<-aux$tau;
+    m[3,k]<-aux$calinski_harabasz;
+    m[4,k]<-aux$dunn;
+    m[5,k]<-aux$gamma;
+    m[6,k]<-aux$ratkowsky_lance;
+    m[7,k]<-aux$silhouette;
+    k=k+1;
+  }
+  return(m)
+}
+
+
+metricas <- function(x){
+acc  <- round(sum(diag(x))/sum(x) ,3)
+tpr  <- round(x[4]/(x[3]+x[4]) ,3)
+fpr  <- round(x[2]/(x[2]+x[1]) ,3)
+prec <- round(x[4]/(x[4]+x[2]) ,3)
+print(paste0("Accuracy: ", acc  ))
+print(paste0("TPR: ", tpr          ))
+print(paste0("FPR: ", fpr         ))
+print(paste0("Precision: ", prec    ))
+print(paste0("F1 Score: ", round((2*tpr*prec)/(tpr+prec),3) ))
+
+}
+
+```
+
+
+#clusters by k-means
+```{r}
+
+set.seed(2020)
+cl2_corr99<-kmeans(arcene_corr_99[,2:3522],2,nstart=20)
+table(cl2_corr99$cluster,arcene_corr_99$labels)
+
+cl2_corr95<-kmeans(arcene_corr_95[,2:2546],2,nstart=20)
+table(cl2_corr95$cluster,arcene_corr_95$labels)
+
+cl2_corr85<-kmeans(arcene_corr_85[,2:2276],2,nstart=20)
+table(cl2_corr85$cluster,arcene_corr_85$labels)
+
+cl2_corr75<-kmeans(arcene_corr_75[,2:2185],2,nstart=20)
+table(cl2_corr75$cluster,arcene_corr_75$labels)
+
+cl2_pca95<-kmeans(arcene_pca_95[,2:160],2,nstart=20)
+table(cl2_pca95$cluster,arcene_pca_95$labels)
+
+cl2_pca85<-kmeans(arcene_pca_85[,2:101],2,nstart=20)
+table(cl2_pca85$cluster,arcene_pca_85$labels)
+
+cl2_pca75<-kmeans(arcene_pca_75[,2:58],2,nstart=20)
+table(cl2_pca75$cluster,arcene_pca_75$labels)
+
+
+metricas(rbind(c(81,51),c(31,37)))
+metricas(rbind(c(81,51),c(31,37)))
+metricas(rbind(c(58,38),c(54,50)))
+metricas(rbind(c(64,31),c(48,57)))
+metricas(rbind(c(62,20),c(50,68)))
+metricas(rbind(c(62,20),c(50,68)))
+metricas(rbind(c(62,20),c(50,68)))
+
+```
+
+
+
+#clusters by k-medoids
+
+```{r}
+
+set.seed(2020)
+clmed2_corr99<-pam(as.matrix(arcene_corr_99[,2:3522]),2,FALSE)
+table(clmed2_corr99$cluster,arcene_corr_99$labels)
+
+clmed2_corr95<-pam(as.matrix(arcene_corr_95[,2:2546]),2,FALSE)
+table(clmed2_corr95$cluster,arcene_corr_95$labels)
+
+clmed2_corr85<-pam(as.matrix(arcene_corr_85[,2:2276]),2,FALSE)
+table(clmed2_corr85$cluster,arcene_corr_85$labels)
+
+clmed2_corr75<-pam(as.matrix(arcene_corr_75[,2:2185]),2,FALSE)
+table(clmed2_corr75$cluster,arcene_corr_75$labels)
+
+clmed2_pca95<-pam(as.matrix(arcene_pca_95[,2:160]),2,FALSE)
+table(clmed2_pca95$cluster,arcene_pca_95$labels)
+
+clmed2_pca85<-pam(as.matrix(arcene_pca_85[,2:101]),2,FALSE)
+table(clmed2_pca85$cluster,arcene_pca_85$labels)
+
+clmed2_pca75<-pam(as.matrix(arcene_pca_75[,2:58]),2,FALSE)
+table(clmed2_pca75$cluster,arcene_pca_75$labels)
+
+
+metricas(rbind(c(70,26),c(42,62)))
+metricas(rbind(c(59,42),c(53,46)))
+metricas(rbind(c(62,45),c(50,43)))
+metricas(rbind(c(60,31),c(52,57)))
+metricas(rbind(c(58,21),c(54,67)))
+metricas(rbind(c(59,21),c(53,67)))
+metricas(rbind(c(60,21),c(52,67)))
+
+
+```
+
+```{r}
+
+#Metric scores
+results=melt(data.frame(PCA75=c(0.8,0.737,0.161,0.737,0.737),
+                        PCA85=c(0.86,0.75,0.038,0.947,0.837),
+                        PCA95=c(0.64,0.524,0.276,0.579,0.55),
+                        scores=c("Accuracy","TPR","FPR","Precision","F1 Score")))
+colnames(results)[2]<-"Process"
+ggplot(results,aes(scores, value,fill=Process))+geom_bar(position="dodge",stat="identity")
+
+```
+
+#Obtaining performance scores for the clustering methods
+
+```{r}
+
+indmeans_corr_99<-ind3(arcene_corr_99[,2:3522])
+indmed_corr_99<-ind4(arcene_corr_99[,2:3522])
+indmeans_corr_95<-ind3(arcene_corr_95[,2:2546])
+indmed_corr_95<-ind4(arcene_corr_95[,2:2546])
+indmeans_corr_85<-ind3(arcene_corr_85[,2:2276])
+indmed_corr_85<-ind4(arcene_corr_85[,2:2276])
+indmeans_corr_75<-ind3(arcene_corr_75[,2:2185])
+indmed_corr_75<-ind4(arcene_corr_75[,2:2185])
+indmeans_pca_95<-ind3(arcene_pca_95[,2:160])
+indmed_pca_95<-ind4(arcene_pca_95[,2:160])
+indmeans_pca_85<-ind3(arcene_pca_85[,2:101])
+indmed_pca_85<-ind4(arcene_pca_85[,2:101])
+indmeans_pca_75<-ind3(arcene_pca_75[,2:58])
+indmed_pca_75<-ind4(arcene_pca_75[,2:58])
+
+
+```
+
+
+
+
+
+#Creating the datasets with the new labels, obtained from clustering
+```{r}
+
+new_arcene_corr_99<-arcene_corr_99
+for(i in 1:length(arcene_corr_99$labels)){
+  if(clmed2_corr99$cluster[i]==2){
+    new_arcene_corr_99$labels[i]=-1
+  }
+  else{
+    new_arcene_corr_99$labels[i]=1
+  }
+}
+
+
+new_arcene_pca_85<-arcene_pca_85
+for(i in 1:length(arcene_pca_85$labels)){
+  if(cl2_pca85$cluster[i]==2){
+    new_arcene_pca_85$labels[i]=-1
+  }
+  else{
+    new_arcene_pca_85$labels[i]=1
+  }
+}
+
+new_arcene_corr_99$labels<-as.factor(new_arcene_corr_99$labels)
+new_arcene_pca_85$labels<-as.factor(new_arcene_pca_85$labels)
+
+new_arcene_corr_99_treino <- new_arcene_corr_99[c(1:150),]
+new_arcene_corr_99_teste <- new_arcene_corr_99[c(151:200),]
+
+
+new_arcene_pca_85_treino <- new_arcene_pca_85[c(1:150),]
+new_arcene_pca_85_teste <- new_arcene_pca_85[c(151:200),]
+
+
+```
+
+
+#Training and testing with Decision Trees, for the Corr 0.99 dataset
+```{r}
+# Decision Tree (Complexity Parameter)
+# Train the model
+train.control <- trainControl(method = "cv",number = 5)
+
+new_pred.corr.99.cp <- train(labels~.,
+                      method     = "rpart",
+                      trControl  = train.control,
+                      metric     = "Accuracy",
+                      data       = new_arcene_corr_99_treino)
+# Summarize the results
+print(new_pred.corr.99.cp)
+
+# Plot Accuracy&Kappa
+plot(new_pred.corr.99.cp$results$cp, new_pred.corr.99.cp$results$Accuracy, type="b", frame = TRUE, pch = 19, col = "red", xlab = "Complexity Parameter", ylab = "Score", ylim = c(0.1,1))
+lines(new_pred.corr.99.cp$results$cp, new_pred.corr.99.cp$results$Kappa, type = "b", pch = 15, col = "blue", lty = 2)
+legend("right", legend = c("Accuracy", "Kappa"), col = c("red", "blue"), lty = 1:2, cex = 0.8)
+
+# Prediction
+new_fit.corr.99.cp <- predict(new_pred.corr.99.cp,newdata = new_arcene_corr_99_teste)
+confusionMatrix(new_fit.corr.99.cp,new_arcene_corr_99_teste$labels)
+
+metricas(confusionMatrix(new_fit.corr.99.cp,new_arcene_corr_99_teste$labels)$table)
+arcene_corr_99_teste$labels<-as.factor(arcene_corr_99_teste$labels)
+metricas(confusionMatrix(new_fit.corr.99.cp,arcene_corr_99_teste$labels)$table)
+
+
+# Decision Tree (Max Depth)
+# Train the model
+new_pred.corr.99.depth <- train(labels~.,
+                      method     = "rpart2",
+                      trControl  = train.control,
+                      metric     = "Accuracy",
+                      data       = new_arcene_corr_99_treino)
+# Summarize the results
+print(new_pred.corr.99.depth)
+# Plot Accuracy&Kappa
+plot(new_pred.corr.99.depth$results$maxdepth, new_pred.corr.99.depth$results$Accuracy, type="b", frame = TRUE, pch = 19, col = "red", xlab = "Maximum Tree Depth", ylab = "Score", ylim = c(0.15,1))
+lines(new_pred.corr.99.depth$results$maxdepth, new_pred.corr.99.depth$results$Kappa, type = "b", pch = 15, col = "blue", lty = 2)
+legend("bottomright", legend = c("Accuracy", "Kappa"), col = c("red", "blue"), lty = 1:2, cex = 0.8)
+
+# Prediction
+new_fit.corr.99.depth <- predict(new_pred.corr.99.depth,newdata = new_arcene_corr_99_teste)
+confusionMatrix(new_fit.corr.99.depth,new_arcene_corr_99_teste$labels)
+
+metricas(confusionMatrix(new_fit.corr.99.depth,new_arcene_corr_99_teste$labels)$table)
+arcene_corr_99_teste$labels<-as.factor(arcene_corr_99_teste$labels)
+metricas(confusionMatrix(new_fit.corr.99.depth,arcene_corr_99_teste$labels)$table)
+
+```
+
+#Training and testing with LDA, for the PCA 0.85 dataset
+```{r}
+####################### PCA 85% ####
+train.control <- trainControl(method = "cv",number = 5)
+# Define training control
+set.seed(3000)
+# Train the model
+new_pred.pca.85 <- train(labels~.,
+                     method     = "lda",
+                     trControl  = train.control,
+                     metric     = "Accuracy",
+                     data       = new_arcene_pca_85_treino)
+# Summarize the results
+print(new_pred.pca.85)
+
+new_fit.pca.85<-predict(new_pred.pca.85,newdata = new_arcene_pca_85_teste)
+confusionMatrix(new_fit.pca.85,new_arcene_pca_85_teste$labels)
+
+metricas(confusionMatrix(new_fit.pca.85,new_arcene_pca_85_teste$labels)$table)
+arcene_pca_85_teste$labels<-as.factor(arcene_pca_85_teste$labels)
+metricas(confusionMatrix(new_fit.pca.85,arcene_pca_85_teste$labels)$table)
+
+```
+
+
+
+```{r}
+#Metric scores
+results=melt(data.frame(DTrees.Maxcp.Corr99=c(0.5,1,1,0.5,0.667),
+                        DTrees.MaxTree.Corr99=c(0.96,0.96,0.04,0.96,0.96),
+                        LDA.PCA85=c(0.98,0.964,0,1,0.982),
+                        scores=c("Accuracy","TPR","FPR","Precision","F1 Score")))
+colnames(results)[2]<-"Process"
+ggplot(results,aes(scores, value,fill=Process))+geom_bar(position="dodge",stat="identity")
+
+
+results=melt(data.frame(DTrees.Maxcp.Corr99=c(0.38,1,1,0.38,0.551),
+                        DTrees.MaxTree.Corr99=c(0.68,0.737,0.355,0.56,0.636),
+                        LDA.PCA85=c(0.68,0.789,0.387,0.556,0.652),
+                        scores=c("Accuracy","TPR","FPR","Precision","F1 Score")))
+colnames(results)[2]<-"Process"
+ggplot(results,aes(scores, value,fill=Process))+geom_bar(position="dodge",stat="identity")
+
+```
+
